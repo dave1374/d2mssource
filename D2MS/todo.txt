@@ -1,0 +1,29 @@
+
+code
+
+	close RunThread2
+	unload hack
+	verbose on off semi
+	remove if sell item , hmm
+	not log item from merc to inv
+
+
+site	
+	grouped list
+		main screen is of the day
+			grouped by runeid 
+
+			grouped by runeid 
+			
+			grouped by character 
+
+		grouped by location all time grouped by hr count
+
+		
+
+
+	runes quality 0 mais prob ak portals
+	favicon
+
+database
+	mettre un ispublic partout

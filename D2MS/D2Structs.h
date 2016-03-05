@@ -1,0 +1,743 @@
+#pragma once
+
+#include <windows.h>
+#include <vector>
+
+struct UnitAny;
+struct Room1;
+struct Room2;
+struct Level;
+struct Act;
+struct ActMisc;
+struct RosterUnit;
+struct OverheadMsg;
+struct Skill;
+
+struct FoundItem {
+	std::string name;
+	char code[4];
+	unsigned char dwLevelNo;
+	BYTE itemLevel;		// 1=normal, 2=exceptional, 3=elite
+	unsigned __int16 x;
+	unsigned __int16 y;
+	BYTE qualityLevel;
+};
+
+
+/////////////////////////////////////////////
+// FROM BH MAPHACK
+/////////////////////////////////////////////
+
+struct ItemAttributes {
+	std::string name;
+	char code[4];
+	std::string category;
+	BYTE width;
+	BYTE height;
+	BYTE stackable;
+	BYTE useable;
+	BYTE throwable;
+	BYTE itemLevel;		// 1=normal, 2=exceptional, 3=elite
+	BYTE unusedFlags;
+	unsigned int flags;
+	unsigned int flags2;
+	BYTE qualityLevel;
+};
+
+// Properties from ItemStatCost.txt that we need for parsing incoming 0x9c packets, among other things
+struct StatProperties {
+	std::string name;
+	BYTE saveBits;
+	BYTE saveParamBits;
+	BYTE saveAdd;
+	BYTE op;
+	BYTE sendParamBits;
+	unsigned short ID;
+};
+
+// Collection of item data from the internal UnitAny structure
+struct UnitItemInfo {
+	UnitAny *item;
+	char itemCode[4];
+	ItemAttributes *attrs;
+};
+
+// Properties that can appear on an item from incoming packets
+struct ItemProperty {
+	unsigned int stat;
+	long value;
+
+	unsigned int minimum;
+	unsigned int maximum;
+	unsigned int length;
+
+	unsigned int level;
+	unsigned int characterClass;
+	unsigned int skill;
+	unsigned int tab;
+
+	unsigned int monster;
+
+	unsigned int charges;
+	unsigned int maximumCharges;
+
+	unsigned int skillChance;
+
+	unsigned int perLevel;
+};
+
+// Item data obtained from an incoming 0x9c packet
+struct ItemInfo {
+	ItemAttributes *attrs;
+	char code[4];
+	//std::string packet;
+	std::string name;
+	std::string earName;
+	std::string personalizedName;
+	unsigned int id;
+	unsigned int x;
+	unsigned int y;
+	unsigned int amount;
+	unsigned int prefix;
+	unsigned int suffix;
+	unsigned int setCode;
+	unsigned int uniqueCode;
+	unsigned int runewordId;
+	unsigned int defense;
+	unsigned int action;
+	unsigned int category;
+	unsigned int version;
+	unsigned int directory;
+	unsigned int container;
+	unsigned int earLevel;
+	unsigned int width;
+	unsigned int height;
+	unsigned int quality;
+	unsigned int graphic;
+	unsigned int color;
+	unsigned int superiority;
+	unsigned int runewordParameter;
+	unsigned int maxDurability;
+	unsigned int durability;
+	BYTE usedSockets;
+	BYTE level;
+	BYTE earClass;
+	BYTE sockets;
+	bool equipped;
+	bool inSocket;
+	bool identified;
+	bool switchedIn;
+	bool switchedOut;
+	bool broken;
+	bool potion;
+	bool hasSockets;
+	bool inStore;
+	bool notInSocket;
+	bool ear;
+	bool startItem;
+	bool simpleItem;
+	bool ethereal;
+	bool personalized;
+	bool gambling;
+	bool runeword;
+	bool ground;
+	bool unspecifiedDirectory;
+	bool isGold;
+	bool hasGraphic;
+	bool hasColor;
+	bool isArmor;
+	bool isWeapon;
+	bool indestructible;
+	std::vector<unsigned long> prefixes;
+	std::vector<unsigned long> suffixes;
+	std::vector<ItemProperty> properties;
+	bool operator<(ItemInfo const & other) const;
+};
+
+ItemAttributes ItemAttributeList[];
+StatProperties StatPropertiesList[];
+
+
+
+/////////////////////////////////////////////
+// FROM D2BS
+/////////////////////////////////////////////
+
+struct SplitText
+{
+	wchar_t* lpwszText;
+	SplitText* lpsNext;
+};
+
+struct InventoryInfo {
+	int nLocation;
+	int nMaxXCells;
+	int nMaxYCells;
+};
+
+struct GameStructInfo {
+	BYTE _1[0x1B];					//0x00
+	char szGameName[0x18];			//0x1B
+	char szGameServerIp[0x56];		//0x33
+	char szAccountName[0x30];		//0x89
+	char szCharName[0x18];			//0xB9
+	char szRealmName[0x18];			//0xD1
+	BYTE _2[0x158];					//0xE9
+	char szGamePassword[0x18];		//0x241
+};
+
+struct AutomapCell {
+	DWORD fSaved;					//0x00
+	WORD nCellNo;					//0x04
+	WORD xPixel;					//0x06
+	WORD yPixel;					//0x08
+	WORD wWeight;					//0x0A
+	AutomapCell *pLess;				//0x0C
+	AutomapCell *pMore;				//0x10
+};
+
+struct GfxCell {
+	DWORD flags;					//0x00
+	DWORD width;					//0x04
+	DWORD height;					//0x08
+	DWORD xoffs;					//0x0C
+	DWORD yoffs;					//0x10
+	DWORD _2;						//0x14
+	DWORD lpParent;					//0x18
+	DWORD length;					//0x1C
+	BYTE cols;						//0x20
+};
+
+struct UnitInteraction {
+	DWORD dwMoveType;			//0x00
+	UnitAny* lpPlayerUnit;		//0x04
+	UnitAny* lpTargetUnit;		//0x08
+	DWORD dwTargetX;			//0x0C
+	DWORD dwTargetY;			//0x10
+	DWORD _1;					//0x14
+	DWORD _2;					//0x18
+	Skill *pSkill;
+};
+
+struct CellFile {
+	DWORD dwVersion;				//0x00
+	struct {
+		WORD dwFlags;
+		BYTE mylastcol;
+		BYTE mytabno:1;
+	};								//0x04
+	DWORD eFormat;					//0x08
+	DWORD termination;				//0x0C
+	DWORD numdirs;					//0x10
+	DWORD numcells;					//0x14
+	GfxCell *cells[1];				//0x18
+};
+
+struct CellContext {
+	DWORD _1[13];					//0x00
+	CellFile* pCellFile;			//0x34
+	DWORD _2[4];					//0x38
+};
+
+
+
+struct LevelTxt {
+	DWORD dwLevelNo;				//0x00
+	DWORD _1[60];					//0x04
+	BYTE _2;						//0xF4
+	char szName[40];				//0xF5
+	char szEntranceText[40];		//0x11D
+	char szLevelDesc[41];			//0x145
+	wchar_t wName[40];				//0x16E
+	wchar_t wEntranceText[40];		//0x1BE
+	BYTE nObjGroup[8];				//0x196
+	BYTE nObjPrb[8];				//0x19E
+};
+
+struct ControlText {
+	wchar_t* wText; //0x00
+	DWORD _1[4];	//0x04
+	DWORD dwColor;	//0x14
+	DWORD _2;		//0x18
+	ControlText* pNext;//0x1C
+};
+
+
+#pragma pack(push)
+#pragma pack(1)
+
+struct BnetData {
+	DWORD dwId;					//0x00
+	DWORD dwId2;				//0x04
+	BYTE _1[0xc];				//0x08
+	DWORD dwId3;				//0x14
+	WORD Unk3;					//0x18
+	BYTE _2;					//0x1A
+	char szGameName[0x16];		//0x1B
+	WORD _3;					//0x31
+	char szGameIP[0x10];		//0x33
+	BYTE _5[0x42];				//0x43
+	DWORD dwId4;				//0x85
+	char szAccountName[0x30];	//0x89
+	char szPlayerName[0x18];	//0xB9
+	char szRealmName[0x08];		//0xD1
+	BYTE _8[0x111];				//0xD9
+	BYTE nCharClass;			//0x1EA
+	BYTE nCharFlags;			//0x1EB
+	BYTE nMaxDiff;				//0x1EC
+	BYTE _9[0x1F];				//0x1ED
+	BYTE CreatedGameDifficulty;	//0x20C
+	void *_10;					//0x20D
+	BYTE _11[0x15];				//0x211
+	WORD _12;					//0x226
+	BYTE _13;					//0x228
+	char szRealmName2[0x18];	//0x229
+	char szGamePass[0x18];		//0x241
+	char szGameDesc[0x100];		//0x259
+	WORD _14;					//0x359
+	BYTE _15;					//0x35B
+};
+
+struct RoomTile {
+	Room2* pRoom2;				//0x00
+	RoomTile* pNext; 			//0x04
+	DWORD _2[2];				//0x08
+	DWORD *nNum; 				//0x10
+};
+
+
+struct QuestInfo {
+	void *pBuffer;					//0x00
+	DWORD _1;						//0x04
+};
+
+struct Waypoint {
+	BYTE flags;						//0x00
+};
+
+struct PlayerData {
+	char szName[0x10];				//0x00
+	QuestInfo *pNormalQuest;		//0x10
+	QuestInfo *pNightmareQuest;		//0x14
+	QuestInfo *pHellQuest;			//0x18
+	Waypoint *pNormalWaypoint;		//0x1c
+	Waypoint *pNightmareWaypoint;	//0x20
+	Waypoint *pHellWaypoint;		//0x24
+};
+
+struct CollMap {
+	DWORD dwPosGameX;				//0x00
+	DWORD dwPosGameY;				//0x04
+	DWORD dwSizeGameX;				//0x08
+	DWORD dwSizeGameY;				//0x0C
+	DWORD dwPosRoomX;				//0x10
+	DWORD dwPosRoomY;				//0x14
+	DWORD dwSizeRoomX;				//0x18
+	DWORD dwSizeRoomY;				//0x1C
+	WORD *pMapStart;				//0x20
+	WORD *pMapEnd;					//0x22
+};
+
+struct PresetUnit {
+	DWORD _1;						//0x00
+	DWORD dwTxtFileNo;				//0x04
+	DWORD dwPosX;					//0x08
+	PresetUnit* pPresetNext;		//0x0C
+	DWORD _3;						//0x10
+	DWORD dwType;					//0x14
+	DWORD dwPosY;					//0x18
+};
+
+struct Level {
+	DWORD _1[4];			//0x00
+	Room2* pRoom2First;		//0x10
+	DWORD _2[2];			//0x14
+	DWORD dwPosX;			//0x1C
+	DWORD dwPosY;			//0x20
+	DWORD dwSizeX;			//0x24
+	DWORD dwSizeY;			//0x28
+	DWORD _3[96];			//0x2C
+	Level* pNextLevel;		//0x1AC
+	DWORD _4;				//0x1B0
+	ActMisc* pMisc;			//0x1B4
+	DWORD _5[6];			//0x1BC
+	DWORD dwLevelNo;		//0x1D0
+	DWORD _6[3];			//0x1D4
+	union {            
+		DWORD RoomCenterX[9];
+		DWORD WarpX[9];
+	};						//0x1E0
+	union {            
+		DWORD RoomCenterY[9];
+		DWORD WarpY[9];
+	};						//0x204
+	DWORD dwRoomEntries;	//0x228
+};
+
+struct Room2 {
+	DWORD _1[2];			//0x00
+	Room2** pRoom2Near;		//0x08
+	DWORD _2[5];			//0x0C
+	struct {
+		DWORD dwRoomNumber; //0x00
+		DWORD _1;			//0x04
+		DWORD* pdwSubNumber;//0x08
+	} *pType2Info;			//0x20
+	Room2* pRoom2Next;		//0x24
+	DWORD dwRoomFlags;		//0x28
+	DWORD dwRoomsNear;		//0x2C
+	Room1* pRoom1;			//0x30
+	DWORD dwPosX;			//0x34
+	DWORD dwPosY;			//0x38
+	DWORD dwSizeX;			//0x3C
+	DWORD dwSizeY;			//0x40
+	DWORD _3;				//0x44
+	DWORD dwPresetType;		//0x48
+	RoomTile* pRoomTiles;	//0x4C
+	DWORD _4[2];			//0x50
+	Level* pLevel;			//0x58
+	PresetUnit* pPreset;	//0x5C
+};
+
+#pragma pack(pop)
+
+struct Room1 {
+	Room1** pRoomsNear; 	//0x00
+	DWORD _1[3];			//0x04
+	Room2* pRoom2;			//0x10
+	DWORD _2[3];			//0x14
+	CollMap* Coll;			//0x20
+	DWORD dwRoomsNear;		//0x24
+	DWORD _3[9];			//0x28
+	DWORD dwXStart;			//0x4C
+	DWORD dwYStart;			//0x50
+	DWORD dwXSize;			//0x54
+	DWORD dwYSize;			//0x58
+	DWORD _4[6];			//0x5C
+	UnitAny* pUnitFirst;	//0x74
+	DWORD _5;				//0x78
+	Room1* pRoomNext;		//0x7C
+};
+
+struct ActMisc {
+	DWORD _1[37];			//0x00
+	DWORD dwStaffTombLevel; //0x94
+	DWORD _2[245];			//0x98
+	Act* pAct;				//0x46C
+	DWORD _3[3];			//0x470
+	Level* pLevelFirst;		//0x47C
+};
+
+struct Act {
+	DWORD _1[3];			//0x00
+	DWORD dwMapSeed;		//0x0C
+	Room1* pRoom1;			//0x10
+	DWORD dwAct;			//0x14
+	DWORD _2[12];			//0x18
+	ActMisc* pMisc;			//0x48
+};
+
+struct Path {
+	WORD xOffset;					//0x00
+	WORD xPos;						//0x02
+	WORD yOffset;					//0x04
+	WORD yPos;						//0x06
+	DWORD _1[2];					//0x08
+	WORD xTarget;					//0x10
+	WORD yTarget;					//0x12
+	DWORD _2[2];					//0x14
+	Room1 *pRoom1;					//0x1C
+	Room1 *pRoomUnk;				//0x20
+	DWORD _3[3];					//0x24
+	UnitAny *pUnit;					//0x30
+	DWORD dwFlags;					//0x34
+	DWORD _4;						//0x38
+	DWORD dwPathType;				//0x3C
+	DWORD dwPrevPathType;			//0x40
+	DWORD dwUnitSize;				//0x44
+	DWORD _5[4];					//0x48
+	UnitAny *pTargetUnit;			//0x58
+	DWORD dwTargetType;				//0x5C
+	DWORD dwTargetId;				//0x60
+	BYTE bDirection;				//0x64
+};
+
+struct ItemPath {
+	DWORD _1[3];					//0x00
+	DWORD dwPosX;					//0x0C
+	DWORD dwPosY;					//0x10
+	//Use Path for the rest
+};
+
+struct Stat {
+	WORD wSubIndex;					//0x00
+	WORD wStatIndex;				//0x02
+	DWORD dwStatValue;				//0x04
+};
+
+struct StatVector {
+	Stat* pStats;
+	WORD wCount;
+	WORD wSize;
+};
+
+// Credits to SVR, http://phrozenkeep.hugelaser.com/forum/viewtopic.php?f=8&t=31458&p=224066
+struct StatList {
+	DWORD _1;						//0x00
+	UnitAny* pUnit;					//0x04
+	DWORD dwUnitType;				//0x08
+	DWORD dwUnitId;					//0x0C
+	DWORD dwFlags;					//0x10
+	DWORD _2[4];					//0x14
+	StatVector StatVec;				//0x24
+	StatList *pPrevLink;			//0x2C
+	DWORD _3;						//0x30
+	StatList *pPrev;				//0x34
+	DWORD _4;						//0x38
+	StatList *pNext;				//0x3C
+	StatList *pSetList;				//0x40
+	DWORD _5;						//0x44
+	StatVector SetStatVec;			//0x48
+	DWORD _6[2];					//0x50
+	DWORD StateBits[6];				//0x58
+};
+
+struct Inventory {
+	DWORD dwSignature;				//0x00
+	BYTE *bGame1C;					//0x04
+	UnitAny *pOwner;				//0x08
+	UnitAny *pFirstItem;			//0x0C
+	UnitAny *pLastItem;				//0x10
+	DWORD _1[2];					//0x14
+	DWORD dwLeftItemUid;			//0x1C
+	UnitAny *pCursorItem;			//0x20
+	DWORD dwOwnerId;				//0x24
+	DWORD dwItemCount;				//0x28
+};
+
+struct Light {
+	DWORD _1[3];					//0x00
+	DWORD dwType;					//0x0C
+	DWORD _2[7];					//0x10
+	DWORD dwStaticValid;			//0x2C
+	int *pnStaticMap;				//0x30
+};
+
+struct SkillInfo {
+	WORD wSkillId;					//0x00
+};
+
+struct Skill {
+   SkillInfo *pSkillInfo;			//0x00
+   Skill *pNextSkill;				//0x04
+   DWORD _1[8];						//0x08
+   DWORD dwSkillLevel;				//0x28
+   DWORD _2[2];						//0x2C
+   DWORD ItemId;					//0x34 0xFFFFFFFF if not a charge
+   DWORD ChargesLeft;				//0x38 
+   DWORD IsCharge;					//0x3C 1 for charge, else 0
+};//size = 0x40
+
+struct Info {
+	BYTE *pGame1C;					//0x00
+	Skill *pFirstSkill;				//0x04
+	Skill *pLeftSkill;				//0x08
+	Skill *pRightSkill;				//0x0C
+};
+
+struct ItemData {
+	DWORD dwQuality;				//0x00
+	DWORD dwSeed[2];				//0x04
+	DWORD dwItemFlags;				//0x0C 1 = Owned by player, 0xFFFFFFFF = Not owned
+	DWORD dwFingerPrint;			//0x10 Initial seed
+	DWORD _1;						//0x14 CommandFlags?
+	DWORD dwFlags;					//0x18
+	DWORD _2[2];					//0x1C
+	DWORD dwActionStamp;			//0x24 Changes when an item is changed
+	DWORD dwFileIndex;				//0x28 Data file index UniqueItems.txt etc.
+	DWORD dwItemLevel;				//0x2C
+	WORD wItemFormat;				//0x30
+	WORD wRarePrefix;				//0x32
+	WORD wRareSuffix;				//0x34
+	WORD wAutoPrefix;				//0x36
+	WORD wMagicPrefix[3];			//0x38
+	WORD wMagicSuffix[3];			//0x3E
+	BYTE BodyLocation;				//0x44 Not always cleared
+	BYTE ItemLocation;				//0x45 Non-body/belt location (Body/Belt == 0xFF)
+	WORD _4;						//0x46
+	BYTE bEarLevel;					//0x48
+	BYTE bInvGfxIdx;				//0x49
+	char szPlayerName[16];			//0x4A Personalized / Ear name
+	Inventory *pOwnerInventory;		//0x5C Socketed Items owner Inv
+	DWORD _10;						//0x60
+	UnitAny *pNextInvItem;			//0x64 Next item in socketed item if OwnerInventory is set
+	BYTE GameLocation;				//0x68 Location per docs.d2bs.org (unit.location)
+	BYTE NodePage;					//0x69 Actual location, this is the most reliable by far
+	WORD _12;						//0x6A
+	WORD _13[12];					//0x6C
+	UnitAny *pOwner;				//0x84
+};
+
+
+struct ItemTxt {
+	wchar_t szName2[0x40];			//0x00
+	union {
+		DWORD dwCode;
+		char szCode[4];
+	};								//0x40
+	BYTE _2[0x70];					//0x84
+	WORD nLocaleTxtNo;				//0xF4
+	BYTE _2a[0x19];					//0xF7
+	BYTE xSize;						//0xFC
+	BYTE ySize;						//0xFD
+	BYTE _2b[13];					//0xFE
+	BYTE nType;						//0x11E
+	BYTE _3[0x0d];					//0x11F
+	BYTE fQuest;					//0x12A
+};
+
+struct MonsterTxt {
+	BYTE _1[0x6];					//0x00
+	WORD nLocaleTxtNo;				//0x06
+	WORD flag;						//0x08
+	WORD _1a;						//0x0A
+	union {
+		DWORD flag1;				//0x0C
+		struct {
+			BYTE flag1a;			//0x0C
+			BYTE flag1b;			//0x0D
+			BYTE flag1c[2];			//0x0E
+		};
+	};
+	BYTE _2[0x22];					//0x10
+	WORD velocity;					//0x32
+	BYTE _2a[0x52];					//0x34
+	WORD tcs[3][4];					//0x86
+	BYTE _2b[0x52];					//0x9E
+	wchar_t szDescriptor[0x3c];		//0xF0
+	BYTE _3[0x1a0];					//0x12C
+};
+
+struct MonsterData {
+	BYTE _1[22];					//0x00
+	struct
+	{
+		BYTE fUnk:1;
+		BYTE fNormal:1;
+		BYTE fChamp:1;
+		BYTE fBoss:1;
+		BYTE fMinion:1;
+	};				//0x16
+	BYTE _2[5];
+	BYTE anEnchants[9];				//0x1C
+	WORD wUniqueNo;					//0x26
+	DWORD _5;						//0x28
+	struct {
+		wchar_t wName[28];
+	};								//0x2C
+};
+
+struct ObjectTxt {
+	char szName[0x40];				//0x00
+	wchar_t wszName[0x40];			//0x40
+	BYTE _1[4];						//0xC0
+	BYTE nSelectable0;				//0xC4
+	BYTE _2[0x87];					//0xC5
+	BYTE nOrientation;				//0x14C
+	BYTE _2b[0x19];					//0x14D
+	BYTE nSubClass;					//0x166
+	BYTE _3[0x11];					//0x167
+	BYTE nParm0;					//0x178
+	BYTE _4[0x39];					//0x179
+	BYTE nPopulateFn;				//0x1B2
+	BYTE nOperateFn;				//0x1B3
+	BYTE _5[8];						//0x1B4
+	DWORD nAutoMap;					//0x1BB
+};
+
+struct ObjectData {
+	ObjectTxt *pTxt;				//0x00
+	union {
+		BYTE Type;					//0x04 (0x0F would be a Exp Shrine)
+		struct {
+			BYTE _1:7;
+			BYTE ChestLocked:1;
+		};
+	};
+	DWORD _2[8];					//0x08
+	char szOwner[0x10];				//0x28
+};
+
+struct ObjectPath {
+	Room1 *pRoom1;					//0x00
+	DWORD _1[2];					//0x04
+	DWORD dwPosX;					//0x0C
+	DWORD dwPosY;					//0x10
+	//Leaving rest undefined, use Path
+};
+
+struct UnitAny {
+	DWORD dwType;					//0x00
+	DWORD dwTxtFileNo;				//0x04
+	DWORD _1;						//0x08
+	DWORD dwUnitId;					//0x0C
+	DWORD dwMode;					//0x10
+	union
+	{
+		PlayerData *pPlayerData;
+		ItemData *pItemData;
+		MonsterData *pMonsterData;
+		ObjectData *pObjectData;
+		//TileData *pTileData doesn't appear to exist anymore
+	};								//0x14
+	DWORD dwAct;					//0x18
+	Act *pAct;						//0x1C
+	DWORD dwSeed[2];				//0x20
+	DWORD _2;						//0x28
+	union
+	{
+		Path *pPath;
+		ItemPath *pItemPath;
+		ObjectPath *pObjectPath;
+	};								//0x2C
+	DWORD _3[5];					//0x30
+	DWORD dwGfxFrame;				//0x44
+	DWORD dwFrameRemain;			//0x48
+	WORD wFrameRate;				//0x4C
+	WORD _4;						//0x4E
+	BYTE *pGfxUnk;					//0x50
+	DWORD *pGfxInfo;				//0x54
+	DWORD _5;						//0x58
+	StatList *pStats;				//0x5C
+	Inventory *pInventory;			//0x60
+	Light *ptLight;					//0x64
+	DWORD dwStartLightRadius;               //0x68
+	WORD nPl2ShiftIdx;                              //0x6C
+	WORD nUpdateType;                               //0x6E
+	UnitAny* pUpdateUnit;                           //0x70 - Used when updating unit.
+	DWORD* pQuestRecord;                    //0x74
+	DWORD bSparklyChest;                    //0x78 bool
+	DWORD* pTimerArgs;                              //0x7C
+	DWORD dwSoundSync;                              //0x80
+	DWORD _6[2];                                    //0x84
+	WORD wX;						//0x8C
+	WORD wY;						//0x8E
+	DWORD _7;						//0x90
+	DWORD dwOwnerType;				//0x94
+	DWORD dwOwnerId;				//0x98
+	DWORD _8[2];					//0x9C
+	OverheadMsg* pOMsg;				//0xA4
+	Info *pInfo;					//0xA8
+	DWORD _9[6];					//0xAC
+	DWORD dwFlags;					//0xC4
+	DWORD dwFlags2;					//0xC8
+	DWORD _10[5];					//0xCC
+	UnitAny *pChangedNext;			//0xE0
+	UnitAny *pListNext;				//0xE4 -> 0xD8
+	UnitAny *pRoomNext;				//0xE8
+};
+
+struct UnitHashTable
+{
+	UnitAny* table[128];
+};
